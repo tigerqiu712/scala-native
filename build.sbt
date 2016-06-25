@@ -98,17 +98,25 @@ lazy val noPublishSettings = Seq(
 )
 
 lazy val toolSettings =
-  baseSettings ++
-    Seq(
-      scalaVersion := toolScalaVersion,
-      scalacOptions ++= Seq(
-        "-deprecation",
-        "-unchecked",
-        "-feature",
-        "-encoding", "utf8"
-      ),
-      javacOptions ++= Seq("-encoding", "utf8")
-    )
+  baseSettings ++ Seq(
+    scalaVersion := toolScalaVersion,
+    scalacOptions ++= Seq(
+      "-deprecation",
+      "-unchecked",
+      "-feature",
+      "-encoding", "utf8"
+    ),
+    javacOptions ++= Seq("-encoding", "utf8")
+  )
+
+lazy val partestSettings =
+  baseSettings ++ Seq(
+    shouldPartest := true,
+
+    scalaVersion := libScalaVersion,
+
+    resolvers += Resolver.typesafeIvyRepo("releases")
+  )
 
 lazy val libSettings =
   (baseSettings ++ ScalaNativePlugin.projectSettings.tail) :+
@@ -143,7 +151,7 @@ lazy val nscplugin =
     settings(toolSettings).
     settings(publishSettings).
     settings(
-      scalaVersion := "2.11.8",
+      scalaVersion := libScalaVersion,
       crossVersion := CrossVersion.full,
       unmanagedSourceDirectories in Compile ++= Seq(
         (scalaSource in (nir, Compile)).value,
@@ -247,3 +255,55 @@ lazy val sandbox =
   project.in(file("sandbox")).
     settings(projectSettings).
     settings(noPublishSettings)
+
+lazy val shouldPartest = settingKey[Boolean](
+  "Whether we should run the partest suite.")
+
+lazy val partest =
+  project.in(file("partest")).
+    settings(partestSettings).
+    settings(
+      name := "Partest for Scala Native",
+
+      libraryDependencies ++= {
+        if (shouldPartest.value)
+          Seq(
+            "org.scala-sbt" % "sbt" % sbtVersion.value,
+            "org.scala-lang.modules" %% "scala-partest" % "1.0.13"
+          )
+        else Seq()
+      },
+
+      sources in Compile := {
+        if (shouldPartest.value) {
+          // Partest sources and some sources of sbtplugin (see above)
+          val baseSrcs = (sources in Compile).value
+          // Sources for tools (and hence IR)
+          val toolSrcs = (sources in (tools, Compile)).value
+
+          toolSrcs ++ baseSrcs
+        } else Seq()
+      }
+    ).
+    dependsOn(nscplugin)
+
+lazy val partestSuite =
+  project.in(file("partest-suite")).
+    settings(partestSettings).
+    settings(
+      name := "Partest Suite for Scala Native",
+
+      fork in Test := true,
+
+      javaOptions in Test += "-Xmx1G",
+
+      // Override the dependency of partest - see #1889
+      dependencyOverrides += "org.scala-lang" % "scala-library" % scalaVersion.value % "test",
+
+      testFrameworks ++= {
+        if (shouldPartest.value)
+          Seq(new TestFramework("scala.tools.partest.scalanative.Framework"))
+        else Seq()
+      }
+    ).
+    dependsOn(partest)
