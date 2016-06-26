@@ -41,12 +41,11 @@ class TraitLowering(implicit top: Top, fresh: Fresh) extends Pass {
     (table.ty, Defn.Const(Attrs.None, instanceName, table.ty, table))
   }
 
-  override def preAssembly = {
-    case assembly =>
-      assembly :+ dispatchDefn :+ instanceDefn
+  override def preInject = Hook { case _ =>
+    Seq(dispatchDefn, instanceDefn)
   }
 
-  override def preDefn = {
+  override def preDefn = Hook {
     case _: Defn.Trait =>
       Seq()
 
@@ -54,7 +53,7 @@ class TraitLowering(implicit top: Top, fresh: Fresh) extends Pass {
       Seq()
   }
 
-  override def preInst = {
+  override def preInst = Hook {
     case Inst(n, Op.Method(sig, obj, MethodRef(trt: Trait, meth))) =>
       val typeptr    = Val.Local(fresh(), Type.Ptr)
       val idptr      = Val.Local(fresh(), Type.Ptr)

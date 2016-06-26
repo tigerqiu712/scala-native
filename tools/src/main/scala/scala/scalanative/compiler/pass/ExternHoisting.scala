@@ -14,7 +14,7 @@ class ExternHoisting(implicit top: Top) extends Pass {
     Global.Top(id.substring(7)) // strip extern. prefix
   }
 
-  override def preDefn = {
+  override def preDefn = Hook {
     case defn @ Defn.Declare(attrs, name, _) if attrs.isExtern =>
       Seq(defn.copy(name = stripName(name)))
     case defn @ Defn.Define(attrs, name, _, _) if attrs.isExtern =>
@@ -25,7 +25,7 @@ class ExternHoisting(implicit top: Top) extends Pass {
       Seq(defn.copy(name = stripName(name)))
   }
 
-  override def preVal = {
+  override def preVal = Hook {
     case Val.Global(n @ Ref(node), ty) if node.attrs.isExtern =>
       Val.Global(stripName(n), ty)
   }

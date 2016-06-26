@@ -10,7 +10,7 @@ import nir._
  *  - Op.SizeOf
  */
 class SizeofLowering(implicit fresh: Fresh) extends Pass {
-  override def preInst = {
+  override def preInst = Hook {
     case Inst(n, Op.Sizeof(ty)) =>
       val elem = Val.Local(fresh(), Type.Ptr)
       Seq(

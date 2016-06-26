@@ -61,7 +61,15 @@ class ExceptionLowering(implicit fresh: Fresh) extends Pass {
       finish()
     }
 
-  override def preDefn = {
+  override def preInject = Hook { case _ =>
+    Seq(
+        Defn.Declare(Attrs.None, Rt.beginCatchName, Rt.beginCatchSig),
+        Defn.Declare(Attrs.None, Rt.endCatchName, Rt.endCatchSig),
+        Defn.Declare(Attrs.None, throwName, throwSig)
+    )
+  }
+
+  override def preDefn = Hook {
     case defn @ Defn.Define(_, _, _, blocks) =>
       val cfg        = ControlFlow(blocks)
       val handlerfor = mutable.Map.empty[Local, Option[Next.Fail]]
@@ -95,9 +103,4 @@ object ExceptionLowering extends PassCompanion {
   val throwName = Global.Top("scalanative_throw")
   val throwSig  = Type.Function(Seq(Type.Ptr), Type.Void)
   val throw_    = Val.Global(throwName, Type.Ptr)
-
-  override val injects = Seq(
-      Defn.Declare(Attrs.None, Rt.beginCatchName, Rt.beginCatchSig),
-      Defn.Declare(Attrs.None, Rt.endCatchName, Rt.endCatchSig),
-      Defn.Declare(Attrs.None, throwName, throwSig))
 }

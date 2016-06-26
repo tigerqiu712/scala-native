@@ -43,7 +43,11 @@ class ClassLowering(implicit top: Top, fresh: Fresh) extends Pass {
     Type.Struct(classStructName, classStructBody)
   }
 
-  override def preDefn = {
+  override def preInject = Hook { case _ =>
+    Seq(Defn.Declare(Attrs.None, allocName, allocSig))
+  }
+
+  override def preDefn = Hook {
     case Defn.Class(_, name @ ClassRef(cls), _, _) =>
       val classStructTy = classStruct(cls)
       val classStructDefn =
@@ -58,7 +62,7 @@ class ClassLowering(implicit top: Top, fresh: Fresh) extends Pass {
       Seq()
   }
 
-  override def preInst = {
+  override def preInst = Hook {
     case Inst(n, Op.Classalloc(ClassRef(cls))) =>
       val size = Val.Local(fresh(), Type.I64)
 
@@ -124,7 +128,7 @@ class ClassLowering(implicit top: Top, fresh: Fresh) extends Pass {
       Inst(typeptr.name, Op.Load(Type.Ptr, obj)) +: cond
   }
 
-  override def preType = {
+  override def preType = Hook {
     case ty: Type.RefKind if ty != Type.Unit => Type.Ptr
   }
 }
@@ -135,6 +139,4 @@ object ClassLowering extends PassCompanion {
   val allocName = Global.Top("scalanative_alloc")
   val allocSig  = Type.Function(Seq(Type.Ptr, Type.I64), Type.Ptr)
   val alloc     = Val.Global(allocName, allocSig)
-
-  override val injects = Seq(Defn.Declare(Attrs.None, allocName, allocSig))
 }

@@ -40,18 +40,18 @@ class CopyPropagation extends Pass {
     copies
   }
 
-  override def preDefn = {
+  override def preDefn = Hook {
     case defn: Defn.Define =>
       locals = collect(defn.blocks)
       Seq(defn)
   }
 
-  override def preInst = {
+  override def preInst = Hook {
     case Inst(_, _: Op.Copy) =>
       Seq()
   }
 
-  override def preVal = {
+  override def preVal = Hook {
     case value =>
       @tailrec
       def loop(value: Val): Val =

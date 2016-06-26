@@ -8,7 +8,7 @@ import nir._, Shows._
 import util.sh
 
 class DeadCodeElimination(implicit top: Top) extends Pass {
-  override def preDefn = {
+  override def preDefn = Hook {
     case defn: Defn.Define =>
       val usedef = analysis.UseDef(defn.blocks)
 

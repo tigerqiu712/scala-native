@@ -13,7 +13,7 @@ import nir._
 class LocalBoxingElimination extends Pass {
   import LocalBoxingElimination._
 
-  override def preBlock = {
+  override def preBlock = Hook {
     case block =>
       val records = mutable.UnrolledBuffer.empty[Record]
 

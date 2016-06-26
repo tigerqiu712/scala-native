@@ -10,7 +10,7 @@ import nir._
  *  - Op.Closure
  */
 class ClosureLowering extends Pass {
-  override def preInst = {
+  override def preInst = Hook {
     case Inst(_, _: Op.Closure) =>
       ???
   }

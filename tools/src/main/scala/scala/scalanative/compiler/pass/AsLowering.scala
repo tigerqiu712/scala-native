@@ -8,7 +8,7 @@ import nir._
  *  - Op.As
  */
 class AsLowering extends Pass {
-  override def preInst = {
+  override def preInst = Hook {
     case Inst(n, Op.As(ty1, Of(v, ty2))) if ty1 == ty2 =>
       Seq(Inst(n, Op.Copy(v)))
     case Inst(n, Op.As(_: Type.RefKind, Of(v, _: Type.RefKind))) =>

@@ -11,7 +11,11 @@ class UnitLowering(implicit fresh: Fresh) extends Pass {
 
   private var defnRetty: Type = _
 
-  override def preInst = {
+  override def preInject = Hook { case _ =>
+    Seq(unitDefn)
+  }
+
+  override def preInst = Hook {
     case inst @ Inst(n, op) if op.resty == Type.Unit =>
       Seq(
           Inst(op),
@@ -19,21 +23,21 @@ class UnitLowering(implicit fresh: Fresh) extends Pass {
       )
   }
 
-  override def preDefn = {
+  override def preDefn = Hook {
     case defn @ Defn.Define(_, _, Type.Function(_, retty), blocks) =>
       defnRetty = retty
       Seq(defn)
   }
 
-  override def preCf = {
+  override def preCf = Hook {
     case Cf.Ret(_) if defnRetty == Type.Unit => Cf.Ret(Val.None)
   }
 
-  override def preVal = {
+  override def preVal = Hook {
     case Val.Unit => unit
   }
 
-  override def preType = {
+  override def preType = Hook {
     case Type.Unit =>
       Type.Ptr
 
@@ -54,5 +58,4 @@ object UnitLowering extends PassCompanion {
   val unitDefn  = Defn.Const(Attrs.None, unitName, unitTy, unitValue)
 
   override val depends = Seq(unitName)
-  override val injects = Seq(unitDefn)
 }

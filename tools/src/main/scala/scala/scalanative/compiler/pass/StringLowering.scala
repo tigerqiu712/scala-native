@@ -16,8 +16,6 @@ import nir._
 class StringLowering(implicit top: Top) extends Pass {
   import StringLowering._
 
-  private val strings = mutable.UnrolledBuffer.empty[String]
-
   /** Names of the fields of the java.lang.String in the memory layout order. */
   private val stringFieldNames = {
     val node  = ClassRef.unapply(StringName).get
@@ -26,7 +24,7 @@ class StringLowering(implicit top: Top) extends Pass {
     names
   }
 
-  override def preVal = {
+  override def preVal = Hook {
     case Val.String(v) =>
       val StringCls    = ClassRef.unapply(StringName).get
       val CharArrayCls = ClassRef.unapply(CharArrayName).get

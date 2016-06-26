@@ -161,7 +161,7 @@ lazy val sandbox =
   project.in(file("sandbox")).
     settings(libSettings).
     settings(
-      nativeVerbose := true,
+      nativeVerbose := false,
       nativeClangOptions ++= Seq("-O2")
     ).
     dependsOn(scalalib)

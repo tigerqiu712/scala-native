@@ -11,7 +11,7 @@ import nir._
  *  - Type.Nothing
  */
 class NothingLowering extends Pass {
-  override def preBlock = {
+  override def preBlock = Hook {
     case Block(n, params, insts, cf) =>
       val ninsts = mutable.UnrolledBuffer.empty[Inst]
       var ncf = cf
@@ -30,7 +30,7 @@ class NothingLowering extends Pass {
       Seq(Block(n, params, ninsts.toSeq, ncf))
   }
 
-  override def preType = {
+  override def preType = Hook {
     case Type.Nothing =>
       unsupported(
           "nothing can only be used as the result type of the function")

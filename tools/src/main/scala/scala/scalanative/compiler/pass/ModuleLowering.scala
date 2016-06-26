@@ -44,7 +44,7 @@ import nir._
  *  - Defn.Module
  */
 class ModuleLowering(implicit top: Top, fresh: Fresh) extends Pass {
-  override def preDefn = {
+  override def preDefn = Hook {
     case Defn.Module(attrs, name @ ClassRef(cls), parent, ifaces) =>
       val clsName = name tag "module"
       val clsDefn = Defn.Class(attrs, name tag "module", parent, ifaces)
@@ -102,7 +102,7 @@ class ModuleLowering(implicit top: Top, fresh: Fresh) extends Pass {
       Seq(clsDefn, valueDefn, loadDefn)
   }
 
-  override def preInst = {
+  override def preInst = Hook {
     case Inst(n, Op.Module(name)) =>
       val loadSig = Type.Function(Seq(), Type.Class(name tag "module"))
       val load    = Val.Global(name tag "load", Type.Ptr)
@@ -112,7 +112,7 @@ class ModuleLowering(implicit top: Top, fresh: Fresh) extends Pass {
       )
   }
 
-  override def preType = {
+  override def preType = Hook {
     case Type.Module(n) => Type.Class(n)
   }
 

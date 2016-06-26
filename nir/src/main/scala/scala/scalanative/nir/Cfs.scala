@@ -1,7 +1,16 @@
 package scala.scalanative
 package nir
 
-sealed abstract class Cf
+sealed abstract class Cf {
+  def nexts: Seq[Next] = this match {
+    case Cf.Unreachable | _: Cf.Ret | _: Cf.Throw => Seq()
+    case Cf.Jump(n) => Seq(n)
+    case Cf.If(_, n1, n2) => Seq(n1, n2)
+    case Cf.Switch(_, n, ns) => n +: ns
+    case Cf.Invoke(_, _, _, n1, n2) => Seq(n1, n2)
+    case Cf.Try(n1, n2) => Seq(n1, n2)
+  }
+}
 object Cf {
   // low-level control
   final case object Unreachable extends Cf

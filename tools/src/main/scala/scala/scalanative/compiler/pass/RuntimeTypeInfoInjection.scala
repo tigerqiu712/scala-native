@@ -21,7 +21,7 @@ class RuntimeTypeInfoInjection(implicit top: Top, fresh: Fresh) extends Pass {
       util.unreachable
   }
 
-  override def preDefn = {
+  override def preDefn = Hook {
     case classDefn @ Defn.Class(_, name @ ClassRef(cls), _, _) =>
       val typeDefn =
         Defn.Const(Attrs.None, typeName(cls), cls.typeStruct, cls.typeValue)
@@ -39,7 +39,7 @@ class RuntimeTypeInfoInjection(implicit top: Top, fresh: Fresh) extends Pass {
       Seq(defn, typeDefn)
   }
 
-  override def preVal = {
+  override def preVal = Hook {
     case Val.Global(ScopeRef(node), _) =>
       Val.Global(typeName(node), Type.Ptr)
   }

@@ -1,0 +1,78 @@
+// natural pre
+as-lowering:
+  state: none
+  pre-inst: 1->1
+class-lowering:
+  state: none
+  pre-defn: 1->1, 1->0
+  pre-inst: 1->n
+  pre-type: 1->1
+closure-lowering:
+  state: none
+  pre-inst: 1->n
+extern-hoisting:
+  state: none
+  pre-defn: 1->1
+  pre-val: 1->1
+local-boxing-elimination:
+  state: none
+  pre-block: 1->1
+main-injection:
+  state: none
+  pre-inject: 0->n
+module-lowering:
+  state: none
+  pre-defn: 1->n
+  pre-inst: 1->1
+  pre-type: 1->1
+nothing-lowering:
+  state: none
+  pre-block: 1->1
+  pre-type: 1->1
+rtti:
+  state: none
+  pre-defn: 1->n
+  pre-val: 1->1
+sizeof-lowering:
+  state: none
+  pre-inst: 1->n
+trait-lowering:
+  state: none
+  pre-inject: 0->n
+  pre-defn: 1->0
+  pre-inst: 1->n
+unit-lowering:
+  state:
+    defnRetty: Type
+  pre-inst: 1->n
+  pre-defn: 1->1
+  pre-cf: 1->1
+  pre-val: 1->1
+  pre-type: 1->1
+
+// natural post
+const-lowering:
+  state:
+    consts: UnrolledBuffer[Val]
+  post-inject: 0->n
+  post-val: 1->1
+string-lowering:
+  pre-val: 1->1
+copy-propagation:
+  state:
+    locals: mutable.Map[Local, Val]
+  pre-defn: 1->1
+  pre-inst: 1->0
+  pre-val: 1->1
+dead-code-elimination:
+  state: none
+  pre-defn: 1->1 // should be post-blocks
+exception-lowering:
+  state: none
+  pre-defn: 1->1 // should be post-blocks
+stackalloc-hoisting:
+  state:
+    allocs: UnrolledBuffer.empty[Inst]
+  pre-defn: 1->1
+  pre-inst: 1->0
+  post-defn: 1->1 // should be post-blocks

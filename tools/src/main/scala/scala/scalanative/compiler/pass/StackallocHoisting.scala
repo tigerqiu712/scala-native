@@ -11,22 +11,24 @@ import nir._
 class StackallocHoisting extends Pass {
   private var allocs = mutable.UnrolledBuffer.empty[Inst]
 
-  override def preDefn = {
+  override def preDefn = Hook {
     case defn: Defn.Define =>
       allocs.clear
       Seq(defn)
   }
 
-  override def preInst = {
+  override def preInst = Hook {
     case inst @ Inst(_, alloc: Op.Stackalloc) =>
       allocs += inst
       Seq()
   }
 
-  override def postDefn = {
+  override def postDefn = Hook {
     case defn: Defn.Define =>
       val Block(n, params, insts, cf) +: rest = defn.blocks
-      val newBlocks                           = Block(n, params, allocs ++: insts, cf) +: rest
+
+      val newBlocks = Block(n, params, allocs ++: insts, cf) +: rest
+
       Seq(defn.copy(blocks = newBlocks))
   }
 }

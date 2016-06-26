@@ -12,40 +12,42 @@ final class Compiler(opts: Opts) {
   private lazy val entry =
     Global.Member(Global.Top(opts.entry), "main_class.ssnr.ObjectArray_unit")
 
-  private lazy val passCompanions: Seq[PassCompanion] = Seq(
-      pass.LocalBoxingElimination,
-      pass.DeadCodeElimination,
-      pass.MainInjection,
-      pass.ExternHoisting,
-      pass.ModuleLowering,
-      pass.RuntimeTypeInfoInjection,
-      pass.AsLowering,
-      pass.TraitLowering,
-      pass.ClassLowering,
-      pass.StringLowering,
-      pass.ConstLowering,
-      pass.SizeofLowering,
-      pass.UnitLowering,
-      pass.NothingLowering,
-      pass.ExceptionLowering,
-      pass.StackallocHoisting,
-      pass.CopyPropagation)
+  private lazy val pipeline = Seq(
+      Seq(
+          pass.LocalBoxingElimination,
+          pass.DeadCodeElimination,
+          pass.MainInjection,
+          pass.ExternHoisting,
+          pass.ModuleLowering,
+          pass.RuntimeTypeInfoInjection,
+          pass.AsLowering,
+          pass.TraitLowering,
+          pass.ClassLowering,
+          pass.StringLowering,
+          pass.ConstLowering,
+          pass.SizeofLowering,
+          pass.UnitLowering,
+          pass.NothingLowering,
+          pass.ExceptionLowering,
+          pass.StackallocHoisting,
+          pass.CopyPropagation
+      )
+  )
 
   private lazy val (links, assembly): (Seq[Attr.Link], Seq[Defn]) = {
-    val deps           = passCompanions.flatMap(_.depends).distinct
-    val injects        = passCompanions.flatMap(_.injects).distinct
-    val linker         = new Linker(opts.dotpath, opts.classpath)
-    val (links, defns) = linker.linkClosed(entry +: deps)
+    val companions = pipeline.flatten
+    val deps       = companions.flatMap(_.depends).distinct
+    val linker     = new Linker(opts.dotpath, opts.classpath)
 
-    (links, defns ++ injects)
+    linker.linkClosed(entry +: deps)
   }
 
-  private lazy val passes = {
+  private lazy val phases = {
     val ctx = Ctx(fresh = Fresh("tx"),
                   entry = entry,
                   top = analysis.ClassHierarchy(assembly))
 
-    passCompanions.map(_.apply(ctx))
+    pipeline.map(companions => new Phase(companions.map(_.apply(ctx))))
   }
 
   private def codegen(assembly: Seq[Defn]): Unit = {
@@ -62,7 +64,7 @@ final class Compiler(opts: Opts) {
     }
 
   def apply(): Seq[Attr.Link] = {
-    def loop(assembly: Seq[Defn], passes: Seq[(Pass, Int)]): Seq[Defn] =
+    def loop(assembly: Seq[Defn], passes: Seq[(Phase, Int)]): Seq[Defn] =
       passes match {
         case Seq() =>
           assembly
@@ -77,7 +79,7 @@ final class Compiler(opts: Opts) {
       }
 
     debug(assembly, "00")
-    codegen(loop(assembly, passes.zipWithIndex))
+    codegen(loop(assembly, phases.zipWithIndex))
 
     links
   }

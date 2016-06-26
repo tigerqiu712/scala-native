@@ -19,15 +19,14 @@ class ConstLowering extends Pass {
       consts.length - 1
     }
 
-  override def postAssembly = {
-    case defns =>
-      defns ++ consts.zipWithIndex.map {
-        case (v, idx) =>
-          Defn.Const(Attrs.None, constName(idx), v.ty, v)
-      }
+  override def postInject = Hook { case _ =>
+    consts.zipWithIndex.map {
+      case (v, idx) =>
+        Defn.Const(Attrs.None, constName(idx), v.ty, v)
+    }
   }
 
-  override def postVal = {
+  override def postVal = Hook {
     case Val.Const(v) =>
       Val.Global(constName(constFor(v)), Type.Ptr)
   }

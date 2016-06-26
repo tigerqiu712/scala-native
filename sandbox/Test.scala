@@ -1,8 +1,8 @@
-import scalanative.native._, stdlib._, stdio._
+import scalanative.native._, stdio._
 
 object Test {
   def main(args: Array[String]): Unit = {
-    atexit { () => fprintf(stdout, c"first\n"); () }
-    atexit { () => fprintf(stdout, c"second\n"); () }
+    val sum = (1 to 100).toList.sum
+    printf(c"sum is %d", sum)
   }
 }

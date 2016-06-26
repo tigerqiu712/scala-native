@@ -16,29 +16,31 @@ object UseDef {
   private class CollectLocalValDeps extends Pass {
     val deps = mutable.UnrolledBuffer.empty[Local]
 
-    override def preVal = {
+    override def preVal = Hook {
       case v @ Val.Local(n, _) =>
         deps += n
         v
     }
 
-    override def preNext = {
-      case next =>
-        deps += next.name
-        next
+    override def preCf = Hook {
+      case cf =>
+        deps ++= cf.nexts.map(_.name)
+        cf
     }
   }
 
   private def deps(inst: Inst): Seq[Local] = {
-    val collect = new CollectLocalValDeps
-    collect(inst)
-    collect.deps.distinct
+    val pass  = new CollectLocalValDeps
+    val phase = new Phase(Seq(pass))
+    phase(inst)
+    pass.deps.distinct
   }
 
   private def deps(cf: Cf): Seq[Local] = {
-    val collect = new CollectLocalValDeps
-    collect(cf)
-    collect.deps.distinct
+    val pass  = new CollectLocalValDeps
+    val phase = new Phase(Seq(pass))
+    phase(cf)
+    pass.deps.distinct
   }
 
   private def isPure(op: Op)(implicit top: Top) = op match {
