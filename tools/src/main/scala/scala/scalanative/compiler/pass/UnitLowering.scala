@@ -10,30 +10,29 @@ import Tx.{Expand, Replace}
 class UnitLowering(implicit fresh: Fresh) extends Pass {
   import UnitLowering._
 
-  private var defnRetty: Type = _
-
   override def preInject = Seq(unitDefn)
 
   override def preInst = Expand[Inst] {
-    case inst @ Inst(n, op) if op.resty == Type.Unit =>
+    case inst @ Inst(n, op)
+        if op.resty == Type.Unit
+        && !op.isInstanceOf[Op.Copy]=>
       Seq(
           Inst(op),
           Inst(n, Op.Copy(Val.Unit))
       )
   }
 
-  override def preDefn = Expand[Defn] {
-    case defn @ Defn.Define(_, _, Type.Function(_, retty), blocks) =>
-      defnRetty = retty
-      Seq(defn)
-  }
-
-  override def preCf = Replace[Cf] {
-    case Cf.Ret(_) if defnRetty == Type.Unit => Cf.Ret(Val.None)
-  }
-
-  override def preVal = Replace[Val] {
-    case Val.Unit => unit
+  override def preDefn = Replace[Defn] {
+    case defn @ Defn.Define(_, _, Type.Function(args, Type.Unit), blocks) =>
+      defn.copy(
+        ty     = Type.Function(args, Type.Void),
+        blocks = blocks.map { block =>
+          block.copy(cf = block.cf match {
+            case Cf.Ret(_) => Cf.Ret(Val.None)
+            case cf        => cf
+          })
+        }
+      )
   }
 
   override def preType = Replace[Type] {

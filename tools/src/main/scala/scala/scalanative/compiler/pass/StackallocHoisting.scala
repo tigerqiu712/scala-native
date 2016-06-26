@@ -24,13 +24,20 @@ class StackallocHoisting extends Pass {
       Seq()
   }
 
-  override def postDefn = Expand[Defn] {
+  override def postDefn = Replace[Defn] {
     case defn: Defn.Define =>
       val Block(n, params, insts, cf) +: rest = defn.blocks
 
+      val newRest = rest.flatMap { block =>
+        val insts = block.insts.map {
+          case
+        }
+
+      }
+
       val newBlocks = Block(n, params, allocs ++: insts, cf) +: rest
 
-      Seq(defn.copy(blocks = newBlocks))
+      defn.copy(blocks = newBlocks)
   }
 }
 

@@ -3,7 +3,7 @@ package nir
 
 sealed abstract class Cf {
   def nexts: Seq[Next] = this match {
-    case Cf.Unreachable | _: Cf.Ret | _: Cf.Throw => Seq()
+    case Cf.Unreachable | _: Cf.Ret | _: Cf.Throw | _: Cf.Resume => Seq()
     case Cf.Jump(n) => Seq(n)
     case Cf.If(_, n1, n2) => Seq(n1, n2)
     case Cf.Switch(_, n, ns) => n +: ns

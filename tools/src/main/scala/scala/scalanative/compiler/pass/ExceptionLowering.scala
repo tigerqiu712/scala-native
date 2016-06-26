@@ -71,8 +71,12 @@ class ExceptionLowering(implicit fresh: Fresh) extends Pass {
         Defn.Declare(Attrs.None, throwName, throwSig)
     )
 
-  override def preDefn = Expand[Defn] {
-    case defn @ Defn.Define(_, _, _, blocks) =>
+  override def preDefn = Replace[Defn] {
+    case defn @ Defn.Define(_, _, _, blocks)
+        if blocks.exists { block =>
+          val cf = block.cf
+          cf.isInstanceOf[Cf.Try] || cf.isInstanceOf[Cf.Throw]
+        } =>
       val cfg        = ControlFlow(blocks)
       val handlerfor = mutable.Map.empty[Local, Option[Next.Fail]]
       var curhandler: Option[Next.Fail] = None
@@ -95,7 +99,7 @@ class ExceptionLowering(implicit fresh: Fresh) extends Pass {
         transformBlock(block, curhandler)
       }.flatten
 
-      Seq(defn.copy(blocks = nblocks))
+      defn.copy(blocks = nblocks)
   }
 }
 

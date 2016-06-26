@@ -9,8 +9,9 @@ import util.sh
 import Tx.{Expand, Replace}
 
 class DeadCodeElimination(implicit top: Top) extends Pass {
-  override def preDefn = Expand[Defn] {
+  override def postDefn = Replace[Defn] {
     case defn: Defn.Define =>
+      println(defn.name)
       val usedef = analysis.UseDef(defn.blocks)
 
       val newBlocks = defn.blocks.map { block =>
@@ -21,7 +22,7 @@ class DeadCodeElimination(implicit top: Top) extends Pass {
         block.copy(insts = newInsts)
       }
 
-      Seq(defn.copy(blocks = newBlocks))
+      defn.copy(blocks = newBlocks)
   }
 }
 

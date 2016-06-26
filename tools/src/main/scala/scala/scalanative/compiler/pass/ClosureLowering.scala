@@ -11,9 +11,9 @@ import Tx.{Expand, Replace}
  *  - Op.Closure
  */
 class ClosureLowering extends Pass {
-  override def preInst = Expand[Inst] {
-    case Inst(_, _: Op.Closure) =>
-      ???
+  override def preInst = Replace[Inst] {
+    case isnt @ Inst(_, _: Op.Closure) =>
+      unsupported(inst)
   }
 }
 

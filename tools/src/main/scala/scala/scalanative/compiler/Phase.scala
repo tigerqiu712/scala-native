@@ -7,6 +7,8 @@ import nir._
 final class Phase(passes: Seq[Pass]) {
   private val preDefn: Tx[Defn]    = Tx.fuse(passes.map(_.preDefn))
   private val postDefn: Tx[Defn]   = Tx.fuse(passes.map(_.postDefn))
+  private val preBlocks: Tx[Seq[Block]] = Tx.fuse(passes.map(_.preBlocks))
+  private val postBlocks: Tx[Seq[Block]] = Tx.fuse(passes.map(_.postBlocks))
   private val preBlock: Tx[Block]  = Tx.fuse(passes.map(_.preBlock))
   private val postBlock: Tx[Block] = Tx.fuse(passes.map(_.postBlock))
   private val preInst: Tx[Inst]    = Tx.fuse(passes.map(_.preInst))
@@ -24,7 +26,7 @@ final class Phase(passes: Seq[Pass]) {
   }
 
   private def txDefns(defns: Seq[Defn]): Seq[Defn] =
-    postDefn(preDefn(defns).map(inDefn))
+    Tx.invoke(postDefn, Tx.invoke(preDefn, defns).map(inDefn))
 
   private def inDefn(defn: Defn): Defn = defn match {
     case defn @ Defn.Var(_, _, ty, value) =>
@@ -46,7 +48,7 @@ final class Phase(passes: Seq[Pass]) {
   }
 
   private def txBlocks(blocks: Seq[Block]): Seq[Block] =
-    postBlock(preBlock(blocks).map(inBlock))
+    Tx.invoke(postBlock, Tx.invoke(preBlock, blocks).map(inBlock))
 
   private def inBlock(block: Block): Block = {
     val newparams = block.params.map { param =>
@@ -59,7 +61,7 @@ final class Phase(passes: Seq[Pass]) {
   }
 
   private def txInsts(insts: Seq[Inst]): Seq[Inst] =
-    postInst(preInst(insts).map(inInst))
+    Tx.invoke(postInst, Tx.invoke(preInst, insts).map(inInst))
 
   private def inInst(inst: Inst): Inst = {
     val newop = inst.op match {
@@ -108,7 +110,7 @@ final class Phase(passes: Seq[Pass]) {
   }
 
   private def txCf(cf: Cf): Cf =
-    postCf(inCf(preCf(cf)))
+    Tx.invoke1(postCf, inCf(Tx.invoke1(preCf, cf)))
 
   private def inCf(cf: Cf): Cf = cf match {
     case Cf.Unreachable =>
@@ -137,7 +139,7 @@ final class Phase(passes: Seq[Pass]) {
   }
 
   private def txVal(value: Val): Val =
-    postVal(inVal(preVal(value)))
+    Tx.invoke1(postVal, inVal(Tx.invoke1(preVal, value)))
 
   private def inVal(value: Val): Val = value match {
     case Val.Zero(ty)          => Val.Zero(txType(ty))
@@ -151,7 +153,7 @@ final class Phase(passes: Seq[Pass]) {
   }
 
   private def txType(ty: Type): Type =
-    postType(inType(preType(ty)))
+    Tx.invoke1(postType, inType(Tx.invoke1(preType, ty)))
 
   private def inType(ty: Type): Type = ty match {
     case Type.Array(ty, n)      => Type.Array(txType(ty), n)

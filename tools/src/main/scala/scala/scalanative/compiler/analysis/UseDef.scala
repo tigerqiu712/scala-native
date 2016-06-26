@@ -6,6 +6,7 @@ import scala.collection.mutable
 import ClassHierarchy.Top
 import ClassHierarchyExtractors._
 import nir._
+import Tx.Replace
 
 object UseDef {
   final case class Def(name: Local,
@@ -16,14 +17,16 @@ object UseDef {
   private class CollectLocalValDeps extends Pass {
     val deps = mutable.UnrolledBuffer.empty[Local]
 
-    override def preVal = Tx.Visit[Val] {
+    override def preVal = Replace[Val] {
       case v @ Val.Local(n, _) =>
         deps += n
+        Val.None
     }
 
-    override def preCf = Tx.Visit[Cf] {
-      case cf =>
+    override def preCf = Replace[Cf] {
+      case cf if cf.nexts.nonEmpty =>
         deps ++= cf.nexts.map(_.name)
+        Cf.Ret(Val.None)
     }
   }
 

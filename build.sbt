@@ -45,6 +45,9 @@ lazy val nir =
 lazy val tools =
   project.in(file("tools")).
     settings(toolSettings).
+    settings(
+      libraryDependencies += "com.lihaoyi" %% "sourcecode" % "0.1.1"
+    ).
     dependsOn(nir, util)
 
 lazy val nscplugin =
