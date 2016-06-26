@@ -6,6 +6,7 @@ import scala.collection.mutable
 import compiler.analysis.ClassHierarchy._
 import compiler.analysis.ClassHierarchyExtractors._
 import nir._
+import Tx.{Expand, Replace}
 
 /** Lowers traits and operations on them. */
 class TraitLowering(implicit top: Top, fresh: Fresh) extends Pass {
@@ -41,11 +42,9 @@ class TraitLowering(implicit top: Top, fresh: Fresh) extends Pass {
     (table.ty, Defn.Const(Attrs.None, instanceName, table.ty, table))
   }
 
-  override def preInject = Hook { case _ =>
-    Seq(dispatchDefn, instanceDefn)
-  }
+  override def preInject = Seq(dispatchDefn, instanceDefn)
 
-  override def preDefn = Hook {
+  override def preDefn = Expand[Defn] {
     case _: Defn.Trait =>
       Seq()
 
@@ -53,7 +52,7 @@ class TraitLowering(implicit top: Top, fresh: Fresh) extends Pass {
       Seq()
   }
 
-  override def preInst = Hook {
+  override def preInst = Expand[Inst] {
     case Inst(n, Op.Method(sig, obj, MethodRef(trt: Trait, meth))) =>
       val typeptr    = Val.Local(fresh(), Type.Ptr)
       val idptr      = Val.Local(fresh(), Type.Ptr)

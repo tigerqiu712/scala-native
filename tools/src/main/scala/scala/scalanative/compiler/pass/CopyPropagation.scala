@@ -6,6 +6,7 @@ import scala.collection.mutable
 import scala.annotation.tailrec
 import util.ScopedVar, ScopedVar.scoped
 import nir._
+import Tx.{Expand, Replace}
 
 /** Propagates all copies down the use chain.
  *
@@ -40,18 +41,18 @@ class CopyPropagation extends Pass {
     copies
   }
 
-  override def preDefn = Hook {
+  override def preDefn = Expand[Defn] {
     case defn: Defn.Define =>
       locals = collect(defn.blocks)
       Seq(defn)
   }
 
-  override def preInst = Hook {
+  override def preInst = Expand[Inst] {
     case Inst(_, _: Op.Copy) =>
       Seq()
   }
 
-  override def preVal = Hook {
+  override def preVal = Replace[Val] {
     case value =>
       @tailrec
       def loop(value: Val): Val =

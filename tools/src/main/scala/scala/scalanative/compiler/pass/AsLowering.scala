@@ -3,12 +3,13 @@ package compiler
 package pass
 
 import nir._
+import Tx.{Expand, Replace}
 
 /** Eliminates:
  *  - Op.As
  */
 class AsLowering extends Pass {
-  override def preInst = Hook {
+  override def preInst = Expand[Inst] {
     case Inst(n, Op.As(ty1, Of(v, ty2))) if ty1 == ty2 =>
       Seq(Inst(n, Op.Copy(v)))
     case Inst(n, Op.As(_: Type.RefKind, Of(v, _: Type.RefKind))) =>

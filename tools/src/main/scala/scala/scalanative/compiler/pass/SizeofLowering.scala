@@ -5,12 +5,13 @@ package pass
 import scala.collection.mutable
 import util.ScopedVar, ScopedVar.scoped
 import nir._
+import Tx.{Expand, Replace}
 
 /** Eliminates:
  *  - Op.SizeOf
  */
 class SizeofLowering(implicit fresh: Fresh) extends Pass {
-  override def preInst = Hook {
+  override def preInst = Expand[Inst] {
     case Inst(n, Op.Sizeof(ty)) =>
       val elem = Val.Local(fresh(), Type.Ptr)
       Seq(

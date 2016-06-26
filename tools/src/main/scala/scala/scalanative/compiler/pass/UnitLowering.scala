@@ -4,6 +4,7 @@ package pass
 
 import util.{unreachable, ScopedVar}, ScopedVar.scoped
 import nir._
+import Tx.{Expand, Replace}
 
 /** Eliminates returns of Unit values and replaces them with void. */
 class UnitLowering(implicit fresh: Fresh) extends Pass {
@@ -11,11 +12,9 @@ class UnitLowering(implicit fresh: Fresh) extends Pass {
 
   private var defnRetty: Type = _
 
-  override def preInject = Hook { case _ =>
-    Seq(unitDefn)
-  }
+  override def preInject = Seq(unitDefn)
 
-  override def preInst = Hook {
+  override def preInst = Expand[Inst] {
     case inst @ Inst(n, op) if op.resty == Type.Unit =>
       Seq(
           Inst(op),
@@ -23,21 +22,21 @@ class UnitLowering(implicit fresh: Fresh) extends Pass {
       )
   }
 
-  override def preDefn = Hook {
+  override def preDefn = Expand[Defn] {
     case defn @ Defn.Define(_, _, Type.Function(_, retty), blocks) =>
       defnRetty = retty
       Seq(defn)
   }
 
-  override def preCf = Hook {
+  override def preCf = Replace[Cf] {
     case Cf.Ret(_) if defnRetty == Type.Unit => Cf.Ret(Val.None)
   }
 
-  override def preVal = Hook {
+  override def preVal = Replace[Val] {
     case Val.Unit => unit
   }
 
-  override def preType = Hook {
+  override def preType = Replace[Type] {
     case Type.Unit =>
       Type.Ptr
 

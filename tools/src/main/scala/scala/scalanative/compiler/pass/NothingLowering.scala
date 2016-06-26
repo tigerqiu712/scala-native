@@ -6,12 +6,13 @@ import scala.collection.mutable
 import scala.util.control.Breaks._
 import util.unsupported
 import nir._
+import Tx.{Expand, Replace}
 
 /** Eliminates:
  *  - Type.Nothing
  */
 class NothingLowering extends Pass {
-  override def preBlock = Hook {
+  override def preBlock = Expand[Block] {
     case Block(n, params, insts, cf) =>
       val ninsts = mutable.UnrolledBuffer.empty[Inst]
       var ncf = cf
@@ -30,7 +31,7 @@ class NothingLowering extends Pass {
       Seq(Block(n, params, ninsts.toSeq, ncf))
   }
 
-  override def preType = Hook {
+  override def preType = Replace[Type] {
     case Type.Nothing =>
       unsupported(
           "nothing can only be used as the result type of the function")

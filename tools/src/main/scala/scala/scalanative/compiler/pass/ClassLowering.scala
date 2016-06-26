@@ -6,6 +6,7 @@ import compiler.analysis.ClassHierarchy._
 import compiler.analysis.ClassHierarchyExtractors._
 import util.{sh, unsupported}
 import nir._, Shows._
+import Tx.{Expand, Replace}
 
 /** Lowers classes, methods and fields down to
  *  structs with accompanying vtables.
@@ -43,11 +44,9 @@ class ClassLowering(implicit top: Top, fresh: Fresh) extends Pass {
     Type.Struct(classStructName, classStructBody)
   }
 
-  override def preInject = Hook { case _ =>
-    Seq(Defn.Declare(Attrs.None, allocName, allocSig))
-  }
+  override def preInject = Seq(Defn.Declare(Attrs.None, allocName, allocSig))
 
-  override def preDefn = Hook {
+  override def preDefn = Expand[Defn] {
     case Defn.Class(_, name @ ClassRef(cls), _, _) =>
       val classStructTy = classStruct(cls)
       val classStructDefn =
@@ -62,7 +61,7 @@ class ClassLowering(implicit top: Top, fresh: Fresh) extends Pass {
       Seq()
   }
 
-  override def preInst = Hook {
+  override def preInst = Expand[Inst] {
     case Inst(n, Op.Classalloc(ClassRef(cls))) =>
       val size = Val.Local(fresh(), Type.I64)
 
@@ -128,7 +127,7 @@ class ClassLowering(implicit top: Top, fresh: Fresh) extends Pass {
       Inst(typeptr.name, Op.Load(Type.Ptr, obj)) +: cond
   }
 
-  override def preType = Hook {
+  override def preType = Replace[Type] {
     case ty: Type.RefKind if ty != Type.Unit => Type.Ptr
   }
 }

@@ -4,6 +4,7 @@ package pass
 
 import scala.collection.mutable
 import nir._
+import Tx.{Expand, Replace}
 
 /** Eliminates:
  *  - Val.Const
@@ -19,14 +20,13 @@ class ConstLowering extends Pass {
       consts.length - 1
     }
 
-  override def postInject = Hook { case _ =>
+  override def postInject =
     consts.zipWithIndex.map {
       case (v, idx) =>
         Defn.Const(Attrs.None, constName(idx), v.ty, v)
     }
-  }
 
-  override def postVal = Hook {
+  override def postVal = Replace[Val] {
     case Val.Const(v) =>
       Val.Global(constName(constFor(v)), Type.Ptr)
   }

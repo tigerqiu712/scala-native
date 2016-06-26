@@ -3,6 +3,7 @@ package compiler
 package pass
 
 import nir._
+import Tx.{Expand, Replace}
 
 /** Introduces `main` function that sets up
  *  the runtime and calls the given entry point.
@@ -10,7 +11,7 @@ import nir._
 class MainInjection(entry: Global)(implicit fresh: Fresh) extends Pass {
   import MainInjection._
 
-  override def preInject = Hook { case _ =>
+  override def preInject = {
     val mainTy =
       Type.Function(Seq(Type.Module(entry.top), ObjectArray), Type.Void)
     val main   = Val.Global(entry, Type.Ptr)

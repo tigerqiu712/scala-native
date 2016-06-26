@@ -5,6 +5,7 @@ package pass
 import compiler.analysis.ClassHierarchy._
 import compiler.analysis.ClassHierarchyExtractors._
 import nir._
+import Tx.{Expand, Replace}
 
 /** Lowers modules into module classes with singleton
  *  instance stored in a global variable that is accessed
@@ -44,7 +45,7 @@ import nir._
  *  - Defn.Module
  */
 class ModuleLowering(implicit top: Top, fresh: Fresh) extends Pass {
-  override def preDefn = Hook {
+  override def preDefn = Expand[Defn] {
     case Defn.Module(attrs, name @ ClassRef(cls), parent, ifaces) =>
       val clsName = name tag "module"
       val clsDefn = Defn.Class(attrs, name tag "module", parent, ifaces)
@@ -102,7 +103,7 @@ class ModuleLowering(implicit top: Top, fresh: Fresh) extends Pass {
       Seq(clsDefn, valueDefn, loadDefn)
   }
 
-  override def preInst = Hook {
+  override def preInst = Expand[Inst] {
     case Inst(n, Op.Module(name)) =>
       val loadSig = Type.Function(Seq(), Type.Class(name tag "module"))
       val load    = Val.Global(name tag "load", Type.Ptr)
@@ -112,7 +113,7 @@ class ModuleLowering(implicit top: Top, fresh: Fresh) extends Pass {
       )
   }
 
-  override def preType = Hook {
+  override def preType = Replace[Type] {
     case Type.Module(n) => Type.Class(n)
   }
 

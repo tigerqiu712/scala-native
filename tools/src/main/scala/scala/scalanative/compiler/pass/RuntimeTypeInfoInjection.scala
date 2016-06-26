@@ -5,6 +5,7 @@ package pass
 import compiler.analysis.ClassHierarchy._
 import compiler.analysis.ClassHierarchyExtractors._
 import nir._
+import Tx.{Expand, Replace}
 
 /** Generates type instances for all classes, modules,
  *  traits and structs.
@@ -21,7 +22,7 @@ class RuntimeTypeInfoInjection(implicit top: Top, fresh: Fresh) extends Pass {
       util.unreachable
   }
 
-  override def preDefn = Hook {
+  override def preDefn = Expand[Defn] {
     case classDefn @ Defn.Class(_, name @ ClassRef(cls), _, _) =>
       val typeDefn =
         Defn.Const(Attrs.None, typeName(cls), cls.typeStruct, cls.typeValue)
@@ -39,7 +40,7 @@ class RuntimeTypeInfoInjection(implicit top: Top, fresh: Fresh) extends Pass {
       Seq(defn, typeDefn)
   }
 
-  override def preVal = Hook {
+  override def preVal = Replace[Val] {
     case Val.Global(ScopeRef(node), _) =>
       Val.Global(typeName(node), Type.Ptr)
   }

@@ -7,6 +7,7 @@ import compiler.analysis.ClassHierarchy._
 import compiler.analysis.ClassHierarchyExtractors._
 import util.ScopedVar, ScopedVar.scoped
 import nir._
+import Tx.{Expand, Replace}
 
 /** Lowers strings values into intrinsified global constants.
  *
@@ -24,7 +25,7 @@ class StringLowering(implicit top: Top) extends Pass {
     names
   }
 
-  override def preVal = Hook {
+  override def preVal = Replace[Val] {
     case Val.String(v) =>
       val StringCls    = ClassRef.unapply(StringName).get
       val CharArrayCls = ClassRef.unapply(CharArrayName).get

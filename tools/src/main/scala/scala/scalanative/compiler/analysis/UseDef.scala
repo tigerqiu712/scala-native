@@ -16,30 +16,28 @@ object UseDef {
   private class CollectLocalValDeps extends Pass {
     val deps = mutable.UnrolledBuffer.empty[Local]
 
-    override def preVal = Hook {
+    override def preVal = Tx.Visit[Val] {
       case v @ Val.Local(n, _) =>
         deps += n
-        v
     }
 
-    override def preCf = Hook {
+    override def preCf = Tx.Visit[Cf] {
       case cf =>
         deps ++= cf.nexts.map(_.name)
-        cf
     }
   }
 
   private def deps(inst: Inst): Seq[Local] = {
     val pass  = new CollectLocalValDeps
     val phase = new Phase(Seq(pass))
-    phase(inst)
+    phase.insts(Seq(inst))
     pass.deps.distinct
   }
 
   private def deps(cf: Cf): Seq[Local] = {
     val pass  = new CollectLocalValDeps
     val phase = new Phase(Seq(pass))
-    phase(cf)
+    phase.cf(cf)
     pass.deps.distinct
   }
 

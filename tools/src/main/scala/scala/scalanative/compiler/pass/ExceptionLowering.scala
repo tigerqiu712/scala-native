@@ -6,6 +6,7 @@ import scala.collection.mutable
 import compiler.analysis.ControlFlow
 import util.unreachable
 import nir._
+import Tx.{Expand, Replace}
 
 /** Eliminates:
  *  - Cf.{Try, Throw}
@@ -18,8 +19,10 @@ class ExceptionLowering(implicit fresh: Fresh) extends Pass {
       block.copy(
           insts = block.insts :+ Inst(Op.Call(throwSig, throw_, Seq(v))),
           cf = Cf.Unreachable)
+
     case Cf.Try(Next.Succ(n), fail) =>
       block.copy(cf = Cf.Jump(Next.Label(n, Seq())))
+
     case _ =>
       block
   }
@@ -61,15 +64,14 @@ class ExceptionLowering(implicit fresh: Fresh) extends Pass {
       finish()
     }
 
-  override def preInject = Hook { case _ =>
+  override def preInject =
     Seq(
         Defn.Declare(Attrs.None, Rt.beginCatchName, Rt.beginCatchSig),
         Defn.Declare(Attrs.None, Rt.endCatchName, Rt.endCatchSig),
         Defn.Declare(Attrs.None, throwName, throwSig)
     )
-  }
 
-  override def preDefn = Hook {
+  override def preDefn = Expand[Defn] {
     case defn @ Defn.Define(_, _, _, blocks) =>
       val cfg        = ControlFlow(blocks)
       val handlerfor = mutable.Map.empty[Local, Option[Next.Fail]]

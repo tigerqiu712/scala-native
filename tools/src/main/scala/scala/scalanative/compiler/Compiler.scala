@@ -55,31 +55,14 @@ final class Compiler(opts: Opts) {
     serializeFile((defns, bb) => gen.gen(bb), assembly, opts.outpath)
   }
 
-  private def debug(assembly: Seq[Defn], suffix: String) =
-    if (opts.verbose) {
-      val gen = new GenTextualNIR(assembly)
-      serializeFile((defns, bb) => gen.gen(bb),
-                    assembly,
-                    opts.outpath + s".$suffix.hnir")
-    }
-
   def apply(): Seq[Attr.Link] = {
-    def loop(assembly: Seq[Defn], passes: Seq[(Phase, Int)]): Seq[Defn] =
+    def loop(assembly: Seq[Defn], passes: Seq[Phase]): Seq[Defn] =
       passes match {
-        case Seq() =>
-          assembly
-
-        case (pass, id) +: rest =>
-          val nassembly = pass(assembly)
-          val n         = id + 1
-          val padded    = if (n < 10) "0" + n else "" + n
-
-          debug(nassembly, padded + "-" + pass.getClass.getSimpleName)
-          loop(nassembly, rest)
+        case Seq()         => assembly
+        case phase +: rest => loop(phase.assembly(assembly), rest)
       }
 
-    debug(assembly, "00")
-    codegen(loop(assembly, phases.zipWithIndex))
+    codegen(loop(assembly, phases))
 
     links
   }

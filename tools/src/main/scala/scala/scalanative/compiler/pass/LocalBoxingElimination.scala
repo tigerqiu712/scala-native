@@ -4,6 +4,7 @@ package pass
 
 import scala.collection.mutable
 import nir._
+import Tx.{Expand, Replace}
 
 /** Eliminates redundant box/unbox operations within
  *  a single basic block. This is quite simplistic approach
@@ -13,7 +14,7 @@ import nir._
 class LocalBoxingElimination extends Pass {
   import LocalBoxingElimination._
 
-  override def preBlock = Hook {
+  override def preBlock = Expand[Block] {
     case block =>
       val records = mutable.UnrolledBuffer.empty[Record]
 
