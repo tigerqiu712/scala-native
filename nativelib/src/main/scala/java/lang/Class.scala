@@ -4,7 +4,7 @@ import scala.scalanative.native.Ptr
 import scala.scalanative.runtime.Type
 
 final class _Class[A](val ty: Ptr[Type]) {
-  def getName(): String                 = ???
+  def getName(): String                 = (!ty).name
   def getInterfaces(): Array[_Class[_]] = ???
   def getSuperclass(): _Class[_]        = ???
   def getComponentType(): _Class[_]     = ???
