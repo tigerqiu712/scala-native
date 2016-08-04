@@ -1,34 +1,13 @@
-import scala.scalanative.native._
+package java.util
 
-import java.util.Random
-
-object RandomTest {
-  //Thanks to Scala.js
-
-  def main(args: Array[String]): Unit = {
-    testSeed10()
-    testSeedMinus5()
-    testSeedMaxLong()
-    testSeedMaxInt()
-    testSeedReset()
-    testResetNextGaussian()
-    testNextDouble()
-    testNextBoolean()
-    testNextInt()
-    testNextIntN()
-    testNextInt2Pow()
-    testNextLong()
-    testNextFloat()
-    testNextBytes()
-    testNextGaussian()
-  }
+object RandomSuite extends tests.Suite {
 
   /** Helper class to access next */
   class HackRandom(seed: Long) extends Random(seed) {
     override def next(bits: Int): Int = super.next(bits)
   }
 
-  def testSeed10() = {
+  test("seed 10") {
     val random = new HackRandom(10)
 
     assert(random.next(10) == 747)
@@ -38,7 +17,7 @@ object RandomTest {
     assert(random.next(32) == 254270492)
   }
 
-  def testSeedMinus5() = {
+  test("seed -5") {
     val random = new HackRandom(-5)
 
     assert(random.next(10) == 275)
@@ -48,7 +27,7 @@ object RandomTest {
     assert(random.next(32) == 1635930704)
   }
 
-  def testSeedMaxLong() = {
+  test("seed max long") {
     val random = new HackRandom(Long.MaxValue)
 
     assert(random.next(10) == 275)
@@ -58,7 +37,7 @@ object RandomTest {
     assert(random.next(32) == -1451336087)
   }
 
-  def testSeedMaxInt() = {
+  test("seed max int") {
     val random = new HackRandom(Int.MinValue)
 
     assert(random.next(10) == 388)
@@ -68,7 +47,7 @@ object RandomTest {
     assert(random.next(32) == -2140124682)
   }
 
-  def testSeedReset() = {
+  test("seed reset") {
     val random = new HackRandom(11)
     assert(random.next(10) == 747)
     assert(random.next(1) == 1)
@@ -80,14 +59,14 @@ object RandomTest {
     assert(random.next(6) == 27)
   }
 
-  def testResetNextGaussian() = {
+  test("reset nextGaussian") {
     val random = new Random(-1)
     assert(random.nextGaussian() == 1.7853314409882288)
     random.setSeed(-1)
     assert(random.nextGaussian() == 1.7853314409882288)
   }
 
-  def testNextDouble() = {
+  test("nextDouble") {
     val random = new Random(-45)
     assert(random.nextDouble() == 0.27288421395636253)
     assert(random.nextDouble() == 0.5523165360074201)
@@ -101,7 +80,7 @@ object RandomTest {
     assert(random.nextDouble() == 0.7426529384056163)
   }
 
-  def testNextBoolean() = {
+  test("nextBoolean") {
     val random = new Random(4782934)
     assert(random.nextBoolean() == false)
     assert(random.nextBoolean() == true)
@@ -113,7 +92,7 @@ object RandomTest {
     assert(random.nextBoolean() == false)
   }
 
-  def testNextInt() = {
+  test("nextInt") {
     val random = new Random(-84638)
     assert(random.nextInt() == -1217585344)
     assert(random.nextInt() == 1665699216)
@@ -127,15 +106,15 @@ object RandomTest {
     assert(random.nextInt() == 1397525728)
   }
 
-  def testNextIntN() = {
+  test("nextIntN") {
     val random = new Random(7)
     assert(random.nextInt(76543) == 32736)
-    assert{
+    assert {
       try {
         random.nextInt(0)
         false
       } catch {
-        case _ : Throwable => true
+        case _: Throwable => true
       }
     }
     assert(random.nextInt(45) == 29)
@@ -146,7 +125,7 @@ object RandomTest {
     assert(random.nextInt(10) == 8)
   }
 
-  def testNextInt2Pow() = {
+  test("nextInt2Pow") {
     val random = new Random(-56938)
 
     assert(random.nextInt(32) == 8)
@@ -161,7 +140,7 @@ object RandomTest {
     assert(random.nextInt(32) == 31)
   }
 
-  def testNextLong() = {
+  test("nextLong") {
     val random = new Random(205620432625028L)
     assert(random.nextLong() == 3710537363280377478L)
     assert(random.nextLong() == 4121778334981170700L)
@@ -175,7 +154,7 @@ object RandomTest {
     assert(random.nextLong() == -1998975913933474L)
   }
 
-  def testNextFloat() = {
+  test("nextFloat") {
     val random = new Random(-3920005825473L)
 
     def closeTo(num: Float, exp: Double): Boolean =
@@ -193,7 +172,7 @@ object RandomTest {
     assert(closeTo(random.nextFloat(), 0.06482434))
   }
 
-  def testNextBytes() = {
+  test("nextBytes") {
     val random = new Random(7399572013373333L)
 
     def test(exps: Array[Int]) = {
@@ -202,7 +181,7 @@ object RandomTest {
       random.nextBytes(buf)
       var i = 0
       var res = true
-      assert{
+      assert {
         while (i < buf.size && res == true) {
           res = (buf(i) == exp(i))
           i += 1
@@ -212,15 +191,39 @@ object RandomTest {
     }
 
     test(Array[Int](62, 89, 68, -91, 10, 0, 85))
-    test(Array[Int](-89, -76, 88, 121, -25, 47, 58, -8, 78, 20, -77, 84, -3,
-      -33, 58, -9, 11, 57, -118, 40, -74, -86, 78, 123, 58))
+    test(
+        Array[Int](-89,
+                   -76,
+                   88,
+                   121,
+                   -25,
+                   47,
+                   58,
+                   -8,
+                   78,
+                   20,
+                   -77,
+                   84,
+                   -3,
+                   -33,
+                   58,
+                   -9,
+                   11,
+                   57,
+                   -118,
+                   40,
+                   -74,
+                   -86,
+                   78,
+                   123,
+                   58))
     test(Array[Int](-77, 112, -116))
     test(Array[Int]())
     test(Array[Int](-84, -96, 108))
     test(Array[Int](57, -106, 42, -100, -47, -84, 67, -48, 45))
   }
 
-  def testNextGaussian() = {
+  test("nextGaussian") {
     val random = new Random(2446004)
     assert(random.nextGaussian() == -0.5043346938630431)
     assert(random.nextGaussian() == -0.3250983270156675)
@@ -243,5 +246,4 @@ object RandomTest {
     assert(random.nextGaussian() == 0.3990565555091522)
     assert(random.nextGaussian() == 2.0051627385915154)
   }
-
 }
