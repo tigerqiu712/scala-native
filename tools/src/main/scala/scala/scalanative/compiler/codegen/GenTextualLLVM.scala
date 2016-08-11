@@ -277,35 +277,7 @@ class GenTextualLLVM(assembly: Seq[Defn]) extends GenShow(assembly) {
       }
     }
 
-    cf match {
-      case Cf.Invoke(ty, Val.Global(pointee, _), args, succ, fail) =>
-        val Type.Function(_, resty) = ty
-
-        val name = cfg.nodes(succ.name).block.params.headOption.map(_.name)
-        val bind = name.fold(sh"") { name =>
-          sh"%$name.succ = "
-        }
-
-        buf +=
-        sh"${bind}invoke $ty @$pointee(${r(args, sep = ", ")}) to $succ unwind $fail"
-
-      case Cf.Invoke(ty, ptr, args, succ, fail) =>
-        val Type.Function(_, resty) = ty
-
-        val name = cfg.nodes(succ.name).block.params.headOption.map(_.name)
-        val bind = name.fold(sh"") { name =>
-          sh"%$name.succ = "
-        }
-        val pointee = fresh()
-
-        buf += sh"%$pointee = bitcast $ptr to $ty*"
-        buf +=
-        sh"${bind}invoke $ty %$pointee(${r(args, sep = ", ")}) to $succ unwind $fail"
-
-      case _ =>
-        buf += sh"$cf"
-    }
-
+    buf += sh"$cf"
     buf.toSeq
   }
 
@@ -322,8 +294,10 @@ class GenTextualLLVM(assembly: Seq[Defn]) extends GenShow(assembly) {
       sh"br $cond, $thenp, $elsep"
     case Cf.Switch(scrut, default, cases) =>
       sh"switch $scrut, $default [${r(cases.map(i(_)))}${nl("]")}"
-    case Cf.Invoke(ty, f, args, succ, fail) =>
-      unreachable
+    case Cf.Throw(value) =>
+      ???
+    case Cf.Try(default, cases) =>
+      ???
     case cf =>
       unsupported(cf)
   }
@@ -389,29 +363,12 @@ class GenTextualLLVM(assembly: Seq[Defn]) extends GenShow(assembly) {
   implicit def showAttrSeq: Show[Seq[Attr]] = nir.Shows.showAttrSeq
 
   private object ExSucc {
-    def unapply(edges: Seq[ControlFlow.Edge])
-      : Option[Seq[(Local, Seq[Show.Result])]] = {
-      Some(edges.map {
-        case ControlFlow.Edge(from, to, _: Next.Succ) =>
-          val succ = to.block.params.headOption.map { p =>
-            sh"%${p.name}.succ"
-          }
-          (from.block.name, succ.toSeq)
-        case ControlFlow.Edge(from, _, _: Next.Case) =>
-          (from.block.name, Seq())
-        case ControlFlow.Edge(from, _, Next.Label(_, vals)) =>
-          (from.block.name, vals.map(justVal))
-        case ControlFlow.Edge(_, _, _: Next.Fail) =>
-          return None
-      })
-    }
+    def unapply(
+        edges: Seq[ControlFlow.Edge]): Option[Seq[(Local, Seq[Show.Result])]] =
+      ???
   }
 
   private object ExFail {
-    def unapply(edges: Seq[ControlFlow.Edge]): Boolean =
-      edges.forall {
-        case ControlFlow.Edge(_, _, _: Next.Fail) => true
-        case _                                    => false
-      }
+    def unapply(edges: Seq[ControlFlow.Edge]): Boolean = ???
   }
 }

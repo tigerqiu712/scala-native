@@ -62,12 +62,11 @@ object ControlFlow {
             cases.foreach { case_ =>
               edge(node, nodes(case_.name), case_)
             }
-          case Cf.Invoke(_, _, _, succ, fail) =>
-            edge(node, nodes(succ.name), succ)
-            edge(node, nodes(fail.name), fail)
-          case Cf.Try(next1, next2) =>
-            edge(node, nodes(next1.name), next1)
-            edge(node, nodes(next2.name), next2)
+          case Cf.Try(default, cases) =>
+            edge(node, nodes(default.name), default)
+            cases.foreach { case_ =>
+              edge(node, nodes(case_.name), case_)
+            }
           case _ =>
             unreachable
         }
